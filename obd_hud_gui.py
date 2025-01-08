@@ -51,7 +51,10 @@ class OBDHud(wx.Frame):
 
     def update_values(self, event):
         """Diese Methode holt die OBD-Daten und aktualisiert die GUI."""
-        if connection and connection.status() == obd.OBDStatus.CAR_CONNECTED:
+        if not connection or connection.status() != obd.OBDStatus.CAR_CONNECTED:
+            self.speed_label.SetLabel("Speed: N/A")
+            self.rpm_label.SetLabel("RPM: N/A")
+        else:
             # Geschwindigkeit abrufen
             speed_command = connection.query(obd.commands.SPEED)
             if speed_command and speed_command.value is not None:
@@ -65,9 +68,6 @@ class OBDHud(wx.Frame):
                 self.rpm_label.SetLabel(f"RPM: {rpm_command.value}")
             else:
                 self.rpm_label.SetLabel("RPM: N/A")
-        else:
-            self.speed_label.SetLabel("Speed: N/A")
-            self.rpm_label.SetLabel("RPM: N/A")
 
 
 if __name__ == "__main__":
