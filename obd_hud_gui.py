@@ -1,7 +1,6 @@
 import serial.tools.list_ports  # Zum Scannen der verfügbaren Ports
 import obd
 import tkinter as tk
-from tkinter import ttk
 
 
 # Funktion zum Aufbau der Verbindung
@@ -30,26 +29,22 @@ class OBDHud:
         self.root.title("OBD HUD")
         self.root.geometry("400x300")
 
-        # Setze das Layout der GUI
-        self.speed_label = ttk.Label(self.root, text="Speed: 0 km/h", font=("Arial", 12))
+        # Setze das Layout der GUI mit tk-Widgets
+        self.speed_label = tk.Label(self.root, text="Speed: 0 km/h", font=("Arial", 12))
         self.speed_label.pack(pady=10)
 
-        self.rpm_label = ttk.Label(self.root, text="RPM: 0", font=("Arial", 12))
+        self.rpm_label = tk.Label(self.root, text="RPM: 0", font=("Arial", 12))
         self.rpm_label.pack(pady=10)
 
         # Start des OBD-Update-Timers
         self.update_values()
-
-        self.root.after(1000, self.update_values)
-
-        #self.Show()
 
     def update_values(self):
         """Diese Methode holt die OBD-Daten und aktualisiert die GUI."""
         if not connection or connection.status() != obd.OBDStatus.CAR_CONNECTED:
             self.root.after(1000, self.update_values)
             self.speed_label.config(text="Speed: N/A")
-            self.speed_label.config(text="Speed: N/A")
+            self.rpm_label.config(text="RPM: N/A")
         else:
             # Geschwindigkeit abrufen
             speed_command = connection.query(obd.commands.SPEED)
@@ -58,13 +53,14 @@ class OBDHud:
             else:
                 self.speed_label.config(text="Speed: N/A")
 
-
             # RPM abrufen
             rpm_command = connection.query(obd.commands.RPM)
             if rpm_command and rpm_command.value is not None:
                 self.rpm_label.config(text=f"RPM: {rpm_command.value}")
             else:
                 self.rpm_label.config(text="RPM: N/A")
+
+        self.root.after(1000, self.update_values)  # Timer fortsetzen
 
 
 if __name__ == "__main__":
