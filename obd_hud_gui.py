@@ -1,6 +1,7 @@
 import serial.tools.list_ports  # Zum Scannen der verfügbaren Ports
 import obd
-import wx
+import tkinter as tk
+from tkinter import ttk
 
 
 # Funktion zum Aufbau der Verbindung
@@ -23,54 +24,50 @@ def connect_to_obd():
 connection = connect_to_obd()
 
 
-class OBDHud(wx.Frame):
-    def __init__(self, parent, title):
-        super(OBDHud, self).__init__(parent, title=title, size=(400, 300))
+class OBDHud:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("OBD HUD")
+        self.root.geometry("400x300")
 
         # Setze das Layout der GUI
-        panel = wx.Panel(self)
-        vbox = wx.BoxSizer(wx.VERTICAL)
+        self.speed_label = ttk.Label(self.root, text="Speed: 0 km/h", font=("Arial", 12))
+        self.speed_label.pack(pady=10)
 
-        # Label für Geschwindigkeit
-        self.speed_label = wx.StaticText(panel, label="Speed: 0 km/h")
-        vbox.Add(self.speed_label, flag=wx.ALL, border=10)
-
-        # Label für RPM
-        self.rpm_label = wx.StaticText(panel, label="RPM: 0")
-        vbox.Add(self.rpm_label, flag=wx.ALL, border=10)
-
-        # Setze das Panel-Layout
-        panel.SetSizer(vbox)
+        self.rpm_label = ttk.Label(self.root, text="RPM: 0", font=("Arial", 12))
+        self.rpm_label.pack(pady=10)
 
         # Start des OBD-Update-Timers
-        self.timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.update_values, self.timer)
-        self.timer.Start(1000)  # Aktualisiert alle 1000ms (1 Sekunde)
+        self.update_values()
 
-        self.Show()
+        self.root.after(1000, self.update_values)
 
-    def update_values(self, event):
+        #self.Show()
+
+    def update_values(self):
         """Diese Methode holt die OBD-Daten und aktualisiert die GUI."""
         if not connection or connection.status() != obd.OBDStatus.CAR_CONNECTED:
-            self.speed_label.SetLabel("Speed: N/A")
-            self.rpm_label.SetLabel("RPM: N/A")
+            self.root.after(1000, self.update_values)
+            self.speed_label.config(text="Speed: N/A")
+            self.speed_label.config(text="Speed: N/A")
         else:
             # Geschwindigkeit abrufen
             speed_command = connection.query(obd.commands.SPEED)
             if speed_command and speed_command.value is not None:
-                self.speed_label.SetLabel(f"Speed: {speed_command.value.to('km/h')}")
+                self.speed_label.config(text=f"Speed: {speed_command.value.to('km/h')}")
             else:
-                self.speed_label.SetLabel("Speed: N/A")
+                self.speed_label.config(text="Speed: N/A")
+
 
             # RPM abrufen
             rpm_command = connection.query(obd.commands.RPM)
             if rpm_command and rpm_command.value is not None:
-                self.rpm_label.SetLabel(f"RPM: {rpm_command.value}")
+                self.rpm_label.config(text=f"RPM: {rpm_command.value}")
             else:
-                self.rpm_label.SetLabel("RPM: N/A")
+                self.rpm_label.config(text="RPM: N/A")
 
 
 if __name__ == "__main__":
-    app = wx.App(False)
-    frame = OBDHud(None, "OBD HUD")
-    app.MainLoop()
+    root = tk.Tk()
+    app = OBDHud(root)
+    root.mainloop()
